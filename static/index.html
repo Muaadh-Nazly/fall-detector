@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fall Detection System - Real-time Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .video-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #videoFrame {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-stop {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+        }
+
+        .input-group input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 80px;
+        }
+
+        .dashboard {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .dashboard h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .metric-value.fall-detected {
+            color: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .status-normal {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-fall {
+            background: #f8d7da;
+            color: #721c24;
+            animation: pulse 1s infinite;
+        }
+
+        .stats-section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stats-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .alerts-section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .alerts-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+
+        .alert-item.fall-alert {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .alert-time {
+            font-weight: 600;
+            color: #721c24;
+            margin-bottom: 5px;
+        }
+
+        .alert-details {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .alert-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .alert-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .alert-filename {
+            color: #007bff;
+            text-decoration: underline;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        /* Image Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            margin-top: 5%;
+            animation: zoomIn 0.3s;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #bbb;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.5); }
+            to { transform: scale(1); }
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">
+        <span id="statusText">Connecting...</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🚨 Fall Detection System</h1>
+            <p>Real-time monitoring with intelligent fall detection</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Video Section -->
+            <div class="video-section">
+                <div class="video-container">
+                    <img id="videoFrame" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Video Feed">
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn" onclick="startDetection()">
+                        ▶️ Start Detection
+                    </button>
+                    <button class="btn btn-stop" id="stopBtn" onclick="stopDetection()" disabled>
+                        ⏹️ Stop Detection
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetStats()">
+                        🔄 Reset Statistics
+                    </button>
+                    <div class="input-group">
+                        <label for="webcamIndex">Webcam:</label>
+                        <input type="number" id="webcamIndex" value="0" min="0" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="dashboard">
+                <h2>📊 Dashboard</h2>
+
+                <!-- Live Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">FPS</div>
+                        <div class="metric-value" id="fpsValue">0.0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Fused Probability</div>
+                        <div class="metric-value" id="fusedProb">0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">CNN Probability</div>
+                        <div class="metric-value" id="cnnProb">0.00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">PSI Score</div>
+                        <div class="metric-value" id="psiScore">0.00</div>
+                    </div>
+                </div>
+
+                <!-- Fall Status -->
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span class="status-badge status-normal" id="fallStatus">✅ Normal</span>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats-section">
+                    <h3>📈 Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Frames:</span>
+                        <span class="stat-value" id="totalFrames">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Falls Detected:</span>
+                        <span class="stat-value" id="totalFalls">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Alerts:</span>
+                        <span class="stat-value" id="alertsCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Session Time:</span>
+                        <span class="stat-value" id="sessionTime">0s</span>
+                    </div>
+                </div>
+
+                <!-- Recent Alerts -->
+                <div class="alerts-section">
+                    <h3>🚨 Recent Alerts</h3>
+                    <div id="alertsList">
+                        <div class="loading">No alerts yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videoWebSocket = null;
+        let dashboardWebSocket = null;
+        let isRunning = false;
+
+        // Issue 4 Fix: FPS smoothing with EMA
+        let fpsEMA = 0;
+        const FPS_ALPHA = 0.1; // Smoothing factor (0.0 = no change, 1.0 = no smoothing)
+
+        // Issue 2 Fix: Connection function pattern for Video WebSocket
+        function connectVideoWS() {
+            videoWebSocket = new WebSocket(`ws://${window.location.host}/ws/video`);
+
+            videoWebSocket.onopen = () => {
+                console.log("Video WebSocket connected");
+                updateConnectionStatus(true);
+            };
+
+            videoWebSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "frame") {
+                    // Issue 1 & 5 Fix: Video WS only handles frames, no metrics/stats
+                    document.getElementById("videoFrame").src =
+                        `data:image/jpeg;base64,${data.data}`;
+                }
+            };
+
+            videoWebSocket.onerror = (error) => {
+                console.error("Video WebSocket error:", error);
+                updateConnectionStatus(false);
+            };
+
+            videoWebSocket.onclose = () => {
+                console.log("Video WebSocket disconnected");
+                updateConnectionStatus(false);
+                // Reconnect with full handler setup
+                setTimeout(connectVideoWS, 2000);
+            };
+        }
+
+        // Issue 2 Fix: Connection function pattern for Dashboard WebSocket
+        function connectDashboardWS() {
+            dashboardWebSocket = new WebSocket(`ws://${window.location.host}/ws/dashboard`);
+
+            dashboardWebSocket.onopen = () => {
+                console.log("Dashboard WebSocket connected");
+            };
+
+            dashboardWebSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "dashboard") {
+                    updateDashboard(data);
+                }
+            };
+
+            dashboardWebSocket.onerror = (error) => {
+                console.error("Dashboard WebSocket error:", error);
+            };
+
+            dashboardWebSocket.onclose = () => {
+                console.log("Dashboard WebSocket disconnected");
+                // Reconnect with full handler setup
+                setTimeout(connectDashboardWS, 2000);
+            };
+        }
+
+        // Connect both WebSockets
+        function connectWebSockets() {
+            connectVideoWS();
+            connectDashboardWS();
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById("connectionStatus");
+            const statusText = document.getElementById("statusText");
+
+            if (connected) {
+                statusEl.className = "connection-status status-connected";
+                statusText.textContent = "🟢 Connected";
+            } else {
+                statusEl.className = "connection-status status-disconnected";
+                statusText.textContent = "🔴 Disconnected";
+            }
+        }
+
+        function updateMetrics(metrics) {
+            // Issue 4 Fix: EMA smoothing for FPS
+            if (fpsEMA === 0) {
+                // Initialize with first value
+                fpsEMA = metrics.fps;
+            } else {
+                // EMA: new_value = alpha * current + (1 - alpha) * previous
+                fpsEMA = FPS_ALPHA * metrics.fps + (1 - FPS_ALPHA) * fpsEMA;
+            }
+            document.getElementById("fpsValue").textContent = fpsEMA.toFixed(1);
+
+            // Other metrics (no smoothing needed)
+            document.getElementById("fusedProb").textContent = metrics.fused_prob.toFixed(2);
+            document.getElementById("cnnProb").textContent = metrics.cnn_prob.toFixed(2);
+            document.getElementById("psiScore").textContent = metrics.psi_val.toFixed(2);
+
+            // Update fall status
+            const fallStatus = document.getElementById("fallStatus");
+            if (metrics.fall_flag) {
+                fallStatus.textContent = "🚨 FALL DETECTED!";
+                fallStatus.className = "status-badge status-fall";
+            } else {
+                fallStatus.textContent = "✅ Normal";
+                fallStatus.className = "status-badge status-normal";
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById("totalFrames").textContent = stats.total_frames.toLocaleString();
+            document.getElementById("totalFalls").textContent = stats.total_falls;
+            document.getElementById("alertsCount").textContent = stats.alerts_count;
+        }
+
+        function updateDashboard(data) {
+            if (data.metrics) {
+                updateMetrics(data.metrics);
+            }
+            if (data.stats) {
+                updateStats(data.stats);
+
+                // Update session time
+                const sessionTime = Math.floor(data.stats.session_time);
+                const minutes = Math.floor(sessionTime / 60);
+                const seconds = sessionTime % 60;
+                document.getElementById("sessionTime").textContent = `${minutes}m ${seconds}s`;
+            }
+            if (data.alerts) {
+                updateAlerts(data.alerts);
+            }
+        }
+
+        function updateAlerts(alerts) {
+            const alertsList = document.getElementById("alertsList");
+            if (alerts.length === 0) {
+                alertsList.innerHTML = '<div class="loading">No alerts yet</div>';
+                return;
+            }
+
+            alertsList.innerHTML = alerts.reverse().map(alert => {
+                const date = new Date(alert.timestamp * 1000);
+                const timeStr = date.toLocaleTimeString();
+                const hasImage = alert.filename && alert.filename.trim() !== '';
+                // Escape filename for safe use in HTML attributes
+                const escapedFilename = hasImage ? alert.filename.replace(/'/g, "&#39;").replace(/"/g, "&quot;") : '';
+                return `
+                    <div class="alert-item fall-alert" ${hasImage ? `data-filename="${escapedFilename}" style="cursor: pointer;"` : ''}>
+                        <div class="alert-time">🚨 ${timeStr}</div>
+                        <div class="alert-details">
+                            Fused: ${alert.fused_prob.toFixed(2)} |
+                            PSI: ${alert.psi_score.toFixed(2)} |
+                            CNN: ${alert.cnn_prob.toFixed(2)}
+                        </div>
+                        ${hasImage ? `<div class="alert-filename">📷 Click to view image: ${alert.filename}</div>` : ''}
+                    </div>
+                `;
+            }).join("");
+
+            // Add click event listener for alert items with images (using event delegation)
+            alertsList.querySelectorAll('.alert-item[data-filename]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const filename = this.getAttribute('data-filename');
+                    if (filename) {
+                        showImageModal(filename);
+                    }
+                });
+            });
+        }
+
+        async function startDetection() {
+            const webcamIndex = parseInt(document.getElementById("webcamIndex").value) || 0;
+
+            try {
+                const response = await fetch("/api/start", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({webcam_index: webcamIndex}),
+                });
+
+                const data = await response.json();
+                if (data.status === "started") {
+                    isRunning = true;
+                    document.getElementById("startBtn").disabled = true;
+                    document.getElementById("stopBtn").disabled = false;
+                    console.log("Detection started");
+                } else {
+                    alert(`Error: ${data.message || "Failed to start detection"}`);
+                }
+            } catch (error) {
+                console.error("Error starting detection:", error);
+                alert("Error starting detection. Check console for details.");
+            }
+        }
+
+        async function stopDetection() {
+            try {
+                const response = await fetch("/api/stop", {
+                    method: "POST",
+                });
+
+                const data = await response.json();
+                if (data.status === "stopped") {
+                    isRunning = false;
+                    document.getElementById("startBtn").disabled = false;
+                    document.getElementById("stopBtn").disabled = true;
+                    console.log("Detection stopped");
+                }
+            } catch (error) {
+                console.error("Error stopping detection:", error);
+            }
+        }
+
+        async function resetStats() {
+            try {
+                const response = await fetch("/api/reset", {
+                    method: "POST",
+                });
+
+                const data = await response.json();
+                if (data.status === "reset") {
+                    console.log("Statistics reset");
+                    // Refresh dashboard
+                    if (dashboardWebSocket && dashboardWebSocket.readyState === WebSocket.OPEN) {
+                        dashboardWebSocket.send(JSON.stringify({type: "refresh"}));
+                    }
+                }
+            } catch (error) {
+                console.error("Error resetting statistics:", error);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener("load", () => {
+            connectWebSockets();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener("beforeunload", () => {
+            if (videoWebSocket) videoWebSocket.close();
+            if (dashboardWebSocket) dashboardWebSocket.close();
+        });
+        // Image Modal Functions
+        function showImageModal(filename) {
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("modalImage");
+            modal.style.display = "block";
+            modalImg.src = `/api/image/${encodeURIComponent(filename)}`;
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById("imageModal");
+            modal.style.display = "none";
+        }
+
+        // Close modal when clicking outside the image
+        window.onclick = function(event) {
+            const modal = document.getElementById("imageModal");
+            if (event.target === modal) {
+                closeImageModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+    </script>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close-modal" onclick="closeImageModal()">&times;</span>
+        <img class="modal-content" id="modalImage" alt="Fall Detection Image">
+    </div>
+</body>
+</html>
+
