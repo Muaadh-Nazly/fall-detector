@@ -1,5 +1,7 @@
 # Fall Detection System for Elderly Homes
 
+A **machine vision** system that detects falls in real time from a webcam feed. It combines a **CNN (TFLite)** fall classifier with a **Pose Stability Index (PSI)** derived from body pose, and exposes a **web interface** over **HTML and WebSockets** for live video, metrics, and alerts.
+
 ## 📸 Demo
 
 ### ✅ Fall Detected (True Positive)
@@ -12,8 +14,6 @@
 
 ![Normal State](screenshots/true_positive.png)
 
-
-A **machine vision** system that detects falls in real time from a webcam feed. It combines a **CNN (TFLite)** fall classifier with a **Pose Stability Index (PSI)** derived from body pose, and exposes a **web interface** over **HTML and WebSockets** for live video, metrics, and alerts.
 
 ## What It Does
 
