@@ -1,5 +1,18 @@
 # Fall Detection System for Elderly Homes
 
+## 📸 Demo
+
+### ✅ Fall Detected (True Positive)
+> Person detected mid-fall - bounding box active, PSI threshold breached, alert triggered.
+
+![Fall Detected](screenshots/true_negative.png)
+
+### 🟢 Normal State (True Negative)
+> Person standing upright - bounding box stable, PSI within safe range, no alert.
+
+![Normal State](screenshots/true_positive.png)
+
+
 A **machine vision** system that detects falls in real time from a webcam feed. It combines a **CNN (TFLite)** fall classifier with a **Pose Stability Index (PSI)** derived from body pose, and exposes a **web interface** over **HTML and WebSockets** for live video, metrics, and alerts.
 
 ## What It Does
